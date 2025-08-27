@@ -1,0 +1,82 @@
+{% extends 'nutrition/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-indigo-800">
+        {% if preferences.goal == 'bulking' %}
+            <i class="fas fa-arrow-up mr-2"></i> Bulking Recommendations
+        {% else %}
+            <i class="fas fa-arrow-down mr-2"></i> Cutting Recommendations
+        {% endif %}
+    </h1>
+    <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-sm font-semibold">
+        <i class="fas fa-bullseye mr-1"></i> 
+        {{ preferences.calorie_limit }} kcal | 
+        P: {{ preferences.protein_target }}g | 
+        C: {{ preferences.carb_target }}g | 
+        F: {{ preferences.fat_target }}g
+    </div>
+</div>
+
+{% if not meals %}
+<div class="bg-white rounded-lg shadow-md p-6 text-center">
+    <div class="text-indigo-600 mb-4">
+        <i class="fas fa-utensils text-5xl"></i>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">No meals found matching your criteria</h3>
+    <p class="text-gray-600 mb-4">Try adjusting your preferences:</p>
+    <ul class="text-left max-w-md mx-auto mb-6 text-gray-600">
+        <li class="mb-2">• Increase your calorie limit (current: {{ preferences.calorie_limit }} kcal)</li>
+        <li class="mb-2">• Adjust your protein target (current: {{ preferences.protein_target }}g)</li>
+        <li class="mb-2">• Try different fast food restaurants</li>
+    </ul>
+    <a href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}" 
+       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+        Update Preferences
+    </a>
+</div>
+{% else %}
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for meal in meals %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
+        <div class="p-4">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="text-lg font-bold text-gray-800">{{ meal.food_name }}</h3>
+                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                    {{ meal.brand_name }}
+                </span>
+            </div>
+            
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-2xl font-bold {% if preferences.goal == 'bulking' %}text-green-600{% else %}text-indigo-600{% endif %}">
+                    {{ meal.nf_calories }} kcal
+                </span>
+                <div class="flex space-x-2">
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{{ meal.nf_protein }}g protein</span>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">{{ meal.nf_total_carbohydrate }}g carbs</span>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">{{ meal.nf_total_fat }}g fat</span>
+                </div>
+            </div>
+            
+            <a href="{% url 'meal_detail' meal_id=meal.nix_item_id %}" 
+               class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded transition duration-300">
+                View Details
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if meals %}
+<div class="mt-8 bg-indigo-50 p-4 rounded-lg">
+    <h3 class="text-lg font-semibold text-indigo-800 mb-2">Need more options?</h3>
+    <p class="text-gray-700 mb-3">Try adjusting your calorie or macronutrient targets in your preferences to see different recommendations.</p>
+    <a href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}" 
+       class="inline-block bg-white hover:bg-gray-100 text-indigo-600 font-semibold py-2 px-4 border border-indigo-600 rounded transition duration-300">
+        Update Preferences
+    </a>
+</div>
+{% endif %}
+{% endblock %}

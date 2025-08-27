@@ -1,0 +1,164 @@
+{% extends 'nutrition/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-5 px-6">
+            <h1 class="text-2xl font-bold text-white">Nutrition Preferences</h1>
+            <p class="text-blue-100">Customize your dietary goals and restrictions</p>
+        </div>
+        
+        <div class="p-6">
+            
+            
+            <form method="post" class="space-y-6" id="preferences-form">
+                {% csrf_token %}
+                
+                <!-- Goal Selection -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">Fitness Goal</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for choice in form.goal %}
+                        <label class="flex items-start p-4 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors {% if choice.data.value == form.goal.value %}border-blue-500 bg-blue-50{% else %}border-gray-300{% endif %}">
+                            {{ choice.tag }}
+                            <div class="ml-3">
+                                <span class="block font-medium text-gray-900">
+                                    {% if choice.choice_label == 'bulking' %}
+                                        <i class="fas fa-arrow-up mr-2"></i> Bulking
+                                    {% else %}
+                                        <i class="fas fa-arrow-down mr-2"></i> Cutting
+                                    {% endif %}
+                                </span>
+                                <span class="block text-sm text-gray-500 mt-1">
+                                    {% if choice.choice_label == 'bulking' %}
+                                        Increase muscle mass with calorie surplus
+                                    {% else %}
+                                        Reduce body fat with calorie deficit
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.goal.errors %}
+                        <div class="mt-2 text-sm text-red-600">{{ form.goal.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Macro Targets -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">Macronutrient Targets</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for field in form %}
+                            {% if field.name in 'calorie_limit protein_target carb_target fat_target' %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ field.label }}
+                                </label>
+                                <div class="relative">
+                                    {{ field }}
+                                    {% if field.name == 'calorie_limit' %}
+                                        <span class="absolute right-3 top-2.5 text-gray-500">kcal</span>
+                                    {% else %}
+                                        <span class="absolute right-3 top-2.5 text-gray-500">g</span>
+                                    {% endif %}
+                                </div>
+                                {% if field.errors %}
+                                    <div class="mt-1 text-sm text-red-600">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Allergies -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3">Dietary Restrictions</h2>
+                    <p class="text-sm text-gray-500 mb-3">Select any that apply:</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {% for checkbox in form.allergies %}
+                        <label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50">
+                            {{ checkbox.tag }}
+                            <span class="text-sm text-gray-700">{{ checkbox.choice_label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Save Preferences
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Recommendations Section -->
+    <div class="mt-8 bg-blue-50 p-6 rounded-xl">
+        <h3 class="text-lg font-semibold text-blue-800 mb-4">Nutrition Guidelines</h3>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h4 class="font-medium text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-arrow-up mr-2 text-blue-600"></i>Bulking Recommendations
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Calories: 2500-3500+ kcal/day (10-20% surplus)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Protein: 1.6-2.2g per kg of body weight</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Carbs: 45-55% of total calories</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Fat: 20-30% of total calories</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-arrow-down mr-2 text-blue-600"></i>Cutting Recommendations
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Calories: 1500-2500 kcal/day (10-20% deficit)</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Protein: 2.2-2.6g per kg of body weight</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Carbs: 30-40% of total calories</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-blue-500 mr-2">•</span>
+                        <span>Fat: 20-30% of total calories</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('preferences-form');
+    form.addEventListener('submit', function() {
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+    });
+});
+</script>
+{% endblock %}

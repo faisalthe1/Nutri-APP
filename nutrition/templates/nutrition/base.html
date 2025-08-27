@@ -1,0 +1,106 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Food Nutrition Advisor</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <!-- Add this in your base.html head section -->
+<style>
+    .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #6366f1;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        flex-direction: column;
+    }
+</style>
+
+
+<script>
+    // Show loading indicator on form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function() {
+                document.getElementById('loading-overlay').style.display = 'flex';
+            });
+        });
+    });
+</script>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-indigo-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'index' %}" class="text-2xl font-bold flex items-center">
+                <i class="fas fa-utensils mr-2"></i>
+                FastFuel
+            </a>
+            <nav>
+                <ul class="flex space-x-6">
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'recommendations' %}" class="hover:text-indigo-200">Recommendations</a></li>
+                        <li><a href="{% url 'saved_meals' %}" class="hover:text-indigo-200">Saved Meals</a></li>
+                        <li><a href="{% url 'set_preferences' %}" class="hover:text-indigo-200">Preferences</a></li>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-button">Logout</button>
+                        </form>
+                    {% else %}
+                        <li><a href="{% url 'register' %}" class="hover:text-indigo-200">Register</a></li>
+                        <li><a href="{% url 'login' %}" class="hover:text-indigo-200">Login</a></li>
+                        <li><a href="{% url 'guest_preferences' %}" class="hover:text-indigo-200">Guest</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="px-4 py-3 rounded relative {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}" role="alert">
+                        <span class="block sm:inline">{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2023 FastFuel Nutrition Advisor. All rights reserved.</p>
+            <p class="mt-2 text-gray-400">Nutrition data provided by Nutritionix API</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

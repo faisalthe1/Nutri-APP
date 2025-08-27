@@ -1,0 +1,54 @@
+{% extends 'nutrition/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="hero bg-indigo-50 rounded-lg p-8 md:p-12 mb-12">
+    <div class="flex flex-col md:flex-row items-center">
+        <div class="md:w-1/2 mb-8 md:mb-0">
+            <h1 class="text-4xl md:text-5xl font-bold text-indigo-800 mb-4">Find the Perfect Fast Food for Your Goals</h1>
+            <p class="text-lg text-gray-700 mb-6">Whether you're bulking up or cutting down, we'll help you find fast food meals that align with your nutrition targets.</p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'recommendations' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-center transition duration-300">
+                        Get Recommendations
+                    </a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-center transition duration-300">
+                        Sign Up for Personalized Plans
+                    </a>
+                    <a href="{% url 'guest_preferences' %}" class="bg-white hover:bg-gray-100 text-indigo-600 font-bold py-3 px-6 rounded-lg border border-indigo-600 text-center transition duration-300">
+                        Try as Guest
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="md:w-1/2">
+            <img src="{% static 'images/fastfood-hero.png' %}" alt="Healthy fast food options" class="rounded-lg shadow-xl">
+        </div>
+    </div>
+</div>
+
+<div class="features grid md:grid-cols-3 gap-8 mb-12">
+    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+        <div class="text-indigo-600 mb-4">
+            <i class="fas fa-bullseye text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Goal-Oriented</h3>
+        <p class="text-gray-600">Get meal recommendations tailored specifically for bulking or cutting based on your fitness goals.</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+        <div class="text-indigo-600 mb-4">
+            <i class="fas fa-utensils text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">10,000+ Options</h3>
+        <p class="text-gray-600">Access nutrition data for meals from all major fast food chains and restaurants.</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+        <div class="text-indigo-600 mb-4">
+            <i class="fas fa-chart-pie text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Detailed Nutrition</h3>
+        <p class="text-gray-600">See complete macronutrient breakdowns to make informed decisions about your meals.</p>
+    </div>
+</div>
+{% endblock %}
