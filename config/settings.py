@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
     'nutrition',
     'crispy_forms',
+    'crispy_bootstrap4',
 ]
 
 # --- Middleware (include WhiteNoise for static files in prod) ---
