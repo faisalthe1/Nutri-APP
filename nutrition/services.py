@@ -39,9 +39,12 @@ def _request(endpoint, params):
             return None
         cache.set(key, data, 300)
         return data
-    except (requests.RequestException, ValueError):
-        # Do not log response bodies or headers containing provider/account data.
-        logger.warning('Nutritionix request failed for %s.', endpoint)
+    except (requests.RequestException, ValueError) as error:
+        # Record only safe diagnostics, never provider bodies or credentials.
+        failed_response = getattr(error, 'response', None)
+        status = getattr(failed_response, 'status_code', None)
+        logger.warning('Nutritionix request failed for %s: %s (HTTP %s).',
+                       endpoint, type(error).__name__, status or 'unavailable')
         return None
 
 

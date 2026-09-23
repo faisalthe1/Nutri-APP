@@ -72,6 +72,18 @@ class NutritionServiceTests(SimpleTestCase):
         get.assert_called_once()
 
     @patch('nutrition.services.requests.get')
+    def test_http_failure_logs_status_without_credentials_or_body(self, get):
+        response = requests.Response()
+        response.status_code = 401
+        response._content = b'private provider response'
+        get.return_value.raise_for_status.side_effect = requests.HTTPError(response=response)
+        with self.assertLogs('nutrition.services', level='WARNING') as logs:
+            self.assertIsNone(search_fast_foods('chicken'))
+        self.assertIn('HTTP 401', logs.output[0])
+        self.assertNotIn('test-key', logs.output[0])
+        self.assertNotIn('private provider response', logs.output[0])
+
+    @patch('nutrition.services.requests.get')
     def test_missing_and_nonfinite_nutrients_do_not_crash(self, get):
         get.return_value.json.return_value = {'branded': [
             {**MEAL, 'nf_calories': None, 'full_nutrients': None},
