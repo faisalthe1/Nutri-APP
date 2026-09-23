@@ -1,11 +1,98 @@
 {% extends 'nutrition/base.html' %}
 {% block title %}Explore meals — FastFuel{% endblock %}
 {% block content %}
-<div class="section-heading page-heading"><div><p class="eyebrow">YOUR NEXT GOOD CHOICE</p><h1>Let’s find your fuel.</h1><p>{% if preferences.goal == 'bulking' %}Protein-forward picks{% else %}Lower-calorie picks{% endif %} for your everyday routine.</p></div><a class="button button-outline button-small" href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}">Edit preferences ↗</a></div>
-<div class="target-strip"><div><span class="tiny-label">DAILY TARGETS</span><strong>{{ preferences.goal|capfirst }}</strong></div><div><strong>{{ preferences.calorie_limit }}</strong><span>kcal</span></div><div><strong>{{ preferences.protein_target }}g</strong><span>protein</span></div><div><strong>{{ preferences.carb_target }}g</strong><span>carbs</span></div><div><strong>{{ preferences.fat_target }}g</strong><span>fat</span></div></div>
-<form class="search-form" method="get"><label class="sr-only" for="meal-search">Search a food or restaurant</label><input type="search" id="meal-search" name="q" value="{{ query }}" maxlength="100" placeholder="Search a food or restaurant…"><button class="button button-small" type="submit" data-busy-text="Searching…">Search meals ↗</button></form>
-{% if preferences.allergies %}<p class="notice">Your allergy preferences are saved, but these results are not allergen-filtered. Confirm ingredients with the restaurant.</p>{% endif %}
-{% if meals %}<div class="results-label"><h2>Your meal options</h2><span>{{ meals|length }} picks to explore</span></div><div class="meal-grid">
-{% for meal in meals %}<article class="meal-card" data-reveal><div class="meal-card-top"><span class="pill">{{ meal.brand_name|default:'Restaurant meal' }}</span><span aria-hidden="true">↗</span></div><h3><a href="{% url 'meal_detail' meal.nix_item_id %}">{{ meal.food_name }}</a></h3><p class="meal-serving">{{ meal.serving_qty }} {{ meal.serving_unit }}</p><div class="calorie-value">{{ meal.nf_calories|floatformat:0 }}<span>kcal</span></div><div class="macro-grid"><div><span class="macro-dot protein"></span><strong>{{ meal.nf_protein|floatformat:0 }}g</strong><span>Protein</span></div><div><span class="macro-dot carbs"></span><strong>{{ meal.nf_total_carbohydrate|floatformat:0 }}g</strong><span>Carbs</span></div><div><span class="macro-dot fat"></span><strong>{{ meal.nf_total_fat|floatformat:0 }}g</strong><span>Fat</span></div></div><a class="card-link" href="{% url 'meal_detail' meal.nix_item_id %}">View nutrition <span aria-hidden="true">↗</span></a></article>{% endfor %}</div>
-{% else %}<div class="empty-state panel"><span class="empty-icon" aria-hidden="true">⌕</span><h2>{% if service_unavailable %}A quick pause in the kitchen.{% else %}No matches just yet.{% endif %}</h2><p>{% if service_unavailable %}Nutrition data is temporarily unavailable. Please try again shortly.{% else %}Try another food or restaurant, or adjust your preferences.{% endif %}</p><a class="button button-outline" href="{% url 'recommendations' %}?q={{ query|urlencode }}">Try again ↗</a></div>{% endif %}
+<div class="section-heading page-heading">
+<div>
+<p class="eyebrow">YOUR NEXT GOOD CHOICE</p>
+<h1>Let’s find your fuel.</h1>
+<p>
+{% if preferences.goal == 'bulking' %}Protein-forward picks{% else %}Lower-calorie picks{% endif %} for your everyday routine.</p>
+</div>
+<a class="button button-outline button-small" href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}">Edit preferences ↗</a>
+</div>
+<div class="target-strip">
+<div>
+<span class="tiny-label">DAILY TARGETS</span>
+<strong>{{ preferences.goal|capfirst }}</strong>
+</div>
+<div>
+<strong>{{ preferences.calorie_limit }}</strong>
+<span>kcal</span>
+</div>
+<div>
+<strong>{{ preferences.protein_target }}g</strong>
+<span>protein</span>
+</div>
+<div>
+<strong>{{ preferences.carb_target }}g</strong>
+<span>carbs</span>
+</div>
+<div>
+<strong>{{ preferences.fat_target }}g</strong>
+<span>fat</span>
+</div>
+</div>
+<form class="search-form" method="get">
+<label class="sr-only" for="meal-search">Search a food or restaurant</label>
+<input type="search" id="meal-search" name="q" value="{{ query }}" maxlength="100" placeholder="Search a food or restaurant…">
+<button class="button button-small" type="submit" data-busy-text="Searching…">Search meals ↗</button>
+</form>
+{% if preferences.allergies %}
+<p class="notice">Your allergy preferences are saved, but these results are not allergen-filtered. Confirm ingredients with the restaurant.</p>
+{% endif %}
+{% if meals %}
+<div class="results-label">
+<h2>Your meal options</h2>
+<span>{{ meals|length }} picks to explore</span>
+</div>
+<div class="meal-grid">
+{% for meal in meals %}
+<article class="meal-card" data-reveal>
+<div class="meal-card-top">
+<span class="pill">{{ meal.brand_name|default:'Restaurant meal' }}</span>
+<span aria-hidden="true">↗</span>
+</div>
+<h3>
+<a href="{% url 'meal_detail' meal.nix_item_id %}">{{ meal.food_name }}</a>
+</h3>
+<p class="meal-serving">{{ meal.serving_qty }} {{ meal.serving_unit }}</p>
+<div class="calorie-value">{{ meal.nf_calories|floatformat:0 }}<span>kcal</span>
+</div>
+<div class="macro-grid">
+<div>
+<span class="macro-dot protein">
+</span>
+<strong>{{ meal.nf_protein|floatformat:0 }}g</strong>
+<span>Protein</span>
+</div>
+<div>
+<span class="macro-dot carbs">
+</span>
+<strong>{{ meal.nf_total_carbohydrate|floatformat:0 }}g</strong>
+<span>Carbs</span>
+</div>
+<div>
+<span class="macro-dot fat">
+</span>
+<strong>{{ meal.nf_total_fat|floatformat:0 }}g</strong>
+<span>Fat</span>
+</div>
+</div>
+<a class="card-link" href="{% url 'meal_detail' meal.nix_item_id %}">View nutrition <span aria-hidden="true">↗</span>
+</a>
+</article>
+{% endfor %}
+</div>
+{% else %}
+<div class="empty-state panel">
+<span class="empty-icon" aria-hidden="true">⌕</span>
+<h2>
+{% if service_unavailable %}A quick pause in the kitchen.{% else %}No matches just yet.{% endif %}
+</h2>
+<p>
+{% if service_unavailable %}Nutrition data is temporarily unavailable. Please try again shortly.{% else %}Try another food or restaurant, or adjust your preferences.{% endif %}
+</p>
+<a class="button button-outline" href="{% url 'recommendations' %}?q={{ query|urlencode }}">Try again ↗</a>
+</div>
+{% endif %}
 {% endblock %}

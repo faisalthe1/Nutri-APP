@@ -2,7 +2,81 @@
 {% block title %}{{ meal.food_name }} — FastFuel{% endblock %}
 {% block content %}
 <a class="text-link back-link" href="{% url 'recommendations' %}">← Explore meals</a>
-<div class="detail-layout"><section class="panel detail-main"><p class="eyebrow">{{ meal.brand_name|default:'YOUR MEAL, AT A GLANCE' }}</p><h1>{{ meal.food_name }}</h1><p>Per {{ meal.serving_qty }} {{ meal.serving_unit }}</p><div class="calorie-value">{{ meal.nf_calories|floatformat:0 }}<span>kcal</span></div><div class="macro-grid"><div><span class="macro-dot protein"></span><strong>{{ meal.nf_protein|floatformat:1 }}g</strong><span>Protein</span></div><div><span class="macro-dot carbs"></span><strong>{{ meal.nf_total_carbohydrate|floatformat:1 }}g</strong><span>Carbs</span></div><div><span class="macro-dot fat"></span><strong>{{ meal.nf_total_fat|floatformat:1 }}g</strong><span>Fat</span></div></div><h2>The finer details</h2><dl class="nutrition-facts"><div><dt>Sodium</dt><dd>{{ meal.nf_sodium|default_if_none:'—' }} mg</dd></div><div><dt>Dietary fiber</dt><dd>{{ meal.nf_dietary_fiber|default_if_none:'—' }} g</dd></div><div><dt>Sugars</dt><dd>{{ meal.nf_sugars|default_if_none:'—' }} g</dd></div></dl>
-{% if user.is_authenticated %}<form method="post" action="{% url 'save_meal' meal_id %}">{% csrf_token %}<button class="button full-width" type="submit" data-busy-text="Saving…" {% if is_saved %}disabled{% endif %}>{% if is_saved %}✓ Saved to favorites{% else %}♡ Save this meal{% endif %}</button></form>{% else %}<a class="button" href="{% url 'register' %}">Create an account to save meals ↗</a>{% endif %}
-</section><aside class="preferences-aside"><p class="eyebrow">THE BIGGER PICTURE</p><h2>A part of<br>your day.</h2>{% if preferences %}<p>Compare this serving with your daily targets.</p><div class="goal-progress"><label for="calorie-progress">Calories <strong>{{ meal.nf_calories|floatformat:0 }} / {{ preferences.calorie_limit }} kcal</strong></label><progress id="calorie-progress" value="{{ meal.nf_calories }}" max="{{ preferences.calorie_limit }}"></progress></div><div class="goal-progress"><label for="protein-progress">Protein <strong>{{ meal.nf_protein|floatformat:0 }} / {{ preferences.protein_target }}g</strong></label><progress id="protein-progress" value="{{ meal.nf_protein }}" max="{{ preferences.protein_target }}"></progress></div>{% else %}<p>Add your targets to see how this meal fits into your day.</p><a class="text-link" href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}">Set your preferences ↗</a>{% endif %}<p class="field-hint">Nutrition values are supplied by Nutritionix. Check ingredients and allergens directly with the restaurant.</p></aside></div>
+<div class="detail-layout">
+<section class="panel detail-main">
+<p class="eyebrow">{{ meal.brand_name|default:'YOUR MEAL, AT A GLANCE' }}</p>
+<h1>{{ meal.food_name }}</h1>
+<p>Per {{ meal.serving_qty }} {{ meal.serving_unit }}</p>
+<div class="calorie-value">{{ meal.nf_calories|floatformat:0 }}<span>kcal</span>
+</div>
+<div class="macro-grid">
+<div>
+<span class="macro-dot protein">
+</span>
+<strong>{{ meal.nf_protein|floatformat:1 }}g</strong>
+<span>Protein</span>
+</div>
+<div>
+<span class="macro-dot carbs">
+</span>
+<strong>{{ meal.nf_total_carbohydrate|floatformat:1 }}g</strong>
+<span>Carbs</span>
+</div>
+<div>
+<span class="macro-dot fat">
+</span>
+<strong>{{ meal.nf_total_fat|floatformat:1 }}g</strong>
+<span>Fat</span>
+</div>
+</div>
+<h2>The finer details</h2>
+<dl class="nutrition-facts">
+<div>
+<dt>Sodium</dt>
+<dd>{{ meal.nf_sodium|floatformat:1|default:'—' }} mg</dd>
+</div>
+<div>
+<dt>Dietary fiber</dt>
+<dd>{{ meal.nf_dietary_fiber|floatformat:1|default:'—' }} g</dd>
+</div>
+<div>
+<dt>Sugars</dt>
+<dd>{{ meal.nf_sugars|floatformat:1|default:'—' }} g</dd>
+</div>
+</dl>
+{% if user.is_authenticated %}
+<form method="post" action="{% url 'save_meal' meal_id %}">
+{% csrf_token %}
+<button class="button full-width" type="submit" data-busy-text="Saving…" {% if is_saved %}disabled{% endif %}>
+{% if is_saved %}✓ Saved to favorites{% else %}♡ Save this meal{% endif %}
+</button>
+</form>
+{% else %}
+<a class="button" href="{% url 'register' %}">Create an account to save meals ↗</a>
+{% endif %}
+</section>
+<aside class="preferences-aside">
+<p class="eyebrow">THE BIGGER PICTURE</p>
+<h2>A part of<br>your day.</h2>
+{% if preferences %}
+<p>Compare this serving with your daily targets.</p>
+<div class="goal-progress">
+<label for="calorie-progress">Calories <strong>{{ meal.nf_calories|floatformat:0 }} / {{ preferences.calorie_limit }} kcal</strong>
+</label>
+<progress id="calorie-progress" value="{{ meal.nf_calories }}" max="{{ preferences.calorie_limit }}">
+</progress>
+</div>
+<div class="goal-progress">
+<label for="protein-progress">Protein <strong>{{ meal.nf_protein|floatformat:0 }} / {{ preferences.protein_target }}g</strong>
+</label>
+<progress id="protein-progress" value="{{ meal.nf_protein }}" max="{{ preferences.protein_target }}">
+</progress>
+</div>
+{% else %}
+<p>Add your targets to see how this meal fits into your day.</p>
+<a class="text-link" href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}">Set your preferences ↗</a>
+{% endif %}
+<p class="field-hint">Nutrition values are supplied by Nutritionix. Check ingredients and allergens directly with the restaurant.</p>
+</aside>
+</div>
 {% endblock %}

@@ -1,3 +1,24 @@
 {% extends 'nutrition/base.html' %}
 {% block title %}Log in — FastFuel{% endblock %}
-{% block content %}<div class="auth-layout"><div class="auth-intro"><p class="eyebrow">YOUR NEXT CHAPTER</p><h1>Welcome<br>back to good.</h1><p>Save your favorites. Keep your preferences.<br>Make your next meal a little easier.</p><span class="auth-art" aria-hidden="true">✳</span></div><section class="panel auth-panel"><h2>Good to see you.</h2><p>Log in to find your favorites.</p><form method="post" class="auth-form">{% csrf_token %}{% include 'nutrition/_fields.html' %}<input type="hidden" name="next" value="{{ next }}"><button class="button full-width" type="submit" data-busy-text="Just a moment…">Log in ↗</button></form><p class="auth-switch">New to FastFuel? <a href="{% url 'register' %}">Create an account</a></p><a class="text-link" href="{% url 'guest_preferences' %}">Explore as a guest →</a></section></div>{% endblock %}
+{% block content %}
+<div class="auth-layout">
+<div class="auth-intro">
+<p class="eyebrow">YOUR NEXT CHAPTER</p>
+<h1>Welcome<br>back to good.</h1>
+<p>Save your favorites. Keep your preferences.<br>Make your next meal a little easier.</p>
+<span class="auth-art" aria-hidden="true">✳</span>
+</div>
+<section class="panel auth-panel">
+<h2>Good to see you.</h2>
+<p>Log in to find your favorites.</p>
+<form method="post" class="auth-form">
+{% csrf_token %}{% include 'nutrition/_fields.html' %}
+<input type="hidden" name="next" value="{{ next }}">
+<button class="button full-width" type="submit" data-busy-text="Just a moment…">Log in ↗</button>
+</form>
+<p class="auth-switch">New to FastFuel? <a href="{% url 'register' %}">Create an account</a>
+</p>
+<a class="text-link" href="{% url 'guest_preferences' %}">Explore as a guest →</a>
+</section>
+</div>
+{% endblock %}

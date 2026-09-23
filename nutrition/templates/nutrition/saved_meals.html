@@ -1,4 +1,51 @@
 {% extends 'nutrition/base.html' %}
 {% block title %}Saved meals — FastFuel{% endblock %}
-{% block content %}<div class="section-heading page-heading"><div><p class="eyebrow">YOUR PERSONAL GO-TO MENU</p><h1>The good ones, saved.</h1><p>Familiar favorites for whatever the day brings.</p></div><a class="button button-outline button-small" href="{% url 'recommendations' %}">Find more meals ↗</a></div>
-{% if meals %}<div class="meal-grid">{% for meal in meals %}<article class="meal-card" data-reveal><div class="meal-card-top"><span class="pill">{{ meal.restaurant }}</span><span aria-hidden="true">♡</span></div><h3><a href="{% url 'meal_detail' meal.meal_id %}">{{ meal.meal_name }}</a></h3><div class="calorie-value">{{ meal.calories }}<span>kcal</span></div><div class="macro-grid"><div><strong>{{ meal.protein }}g</strong><span>Protein</span></div><div><strong>{{ meal.carbs }}g</strong><span>Carbs</span></div><div><strong>{{ meal.fat }}g</strong><span>Fat</span></div></div><a class="card-link" href="{% url 'meal_detail' meal.meal_id %}">View nutrition ↗</a><p class="field-hint">Saved {{ meal.saved_at|date:'M j, Y' }}</p></article>{% endfor %}</div>{% else %}<div class="panel empty-state"><span class="empty-icon" aria-hidden="true">♡</span><h2>Your favorites start here.</h2><p>Find a meal you love, then save it to build your own go-to menu.</p><a class="button" href="{% url 'recommendations' %}">Explore meals ↗</a></div>{% endif %}{% endblock %}
+{% block content %}
+<div class="section-heading page-heading">
+<div>
+<p class="eyebrow">YOUR PERSONAL GO-TO MENU</p>
+<h1>The good ones, saved.</h1>
+<p>Familiar favorites for whatever the day brings.</p>
+</div>
+<a class="button button-outline button-small" href="{% url 'recommendations' %}">Find more meals ↗</a>
+</div>
+{% if meals %}
+<div class="meal-grid">
+{% for meal in meals %}
+<article class="meal-card" data-reveal>
+<div class="meal-card-top">
+<span class="pill">{{ meal.restaurant }}</span>
+<span aria-hidden="true">♡</span>
+</div>
+<h3>
+<a href="{% url 'meal_detail' meal.meal_id %}">{{ meal.meal_name }}</a>
+</h3>
+<div class="calorie-value">{{ meal.calories }}<span>kcal</span>
+</div>
+<div class="macro-grid">
+<div>
+<strong>{{ meal.protein }}g</strong>
+<span>Protein</span>
+</div>
+<div>
+<strong>{{ meal.carbs }}g</strong>
+<span>Carbs</span>
+</div>
+<div>
+<strong>{{ meal.fat }}g</strong>
+<span>Fat</span>
+</div>
+</div>
+<a class="card-link" href="{% url 'meal_detail' meal.meal_id %}">View nutrition ↗</a>
+<p class="field-hint">Saved {{ meal.saved_at|date:'M j, Y' }}</p>
+</article>
+{% endfor %}
+</div>
+{% else %}
+<div class="panel empty-state">
+<span class="empty-icon" aria-hidden="true">♡</span>
+<h2>Your favorites start here.</h2>
+<p>Find a meal you love, then save it to build your own go-to menu.</p>
+<a class="button" href="{% url 'recommendations' %}">Explore meals ↗</a>
+</div>
+{% endif %}{% endblock %}

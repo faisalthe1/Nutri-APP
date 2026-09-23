@@ -1,7 +1,30 @@
 {% extends 'nutrition/base.html' %}
 {% block title %}Your preferences — FastFuel{% endblock %}
 {% block content %}
-<div class="page-heading"><p class="eyebrow">LET’S FIND YOUR FUEL</p><h1>A little about you.</h1><p>Set your daily targets. We’ll help you explore your next meal.</p></div>
-<div class="preferences-layout"><section class="panel"><form method="post" class="form-grid">{% csrf_token %}{% include 'nutrition/_fields.html' %}<div class="field-wide"><button class="button full-width" type="submit" data-busy-text="Finding your fuel…">Explore my meals <span aria-hidden="true">↗</span></button></div></form></section>
-<aside class="preferences-aside"><span class="aside-art" aria-hidden="true">✳</span><h2>Make room for<br>what you love.</h2><p>These are your daily targets, not a prescription for a single meal. Use the nutrition breakdown to see how each option fits into your day.</p><div class="aside-divider"></div><h3>A little flexibility helps.</h3><p>You can update your preferences anytime. Your needs are personal, so choose targets that work for you.</p><a class="text-link" href="{% url 'register' %}">Save your preferences with an account ↗</a></aside></div>
+<div class="page-heading">
+<p class="eyebrow">LET’S FIND YOUR FUEL</p>
+<h1>A little about you.</h1>
+<p>Set your daily targets. We’ll help you explore your next meal.</p>
+</div>
+<div class="preferences-layout">
+<section class="panel">
+<form method="post" class="form-grid">
+{% csrf_token %}{% include 'nutrition/_fields.html' %}
+<div class="field-wide">
+<button class="button full-width" type="submit" data-busy-text="Finding your fuel…">Explore my meals <span aria-hidden="true">↗</span>
+</button>
+</div>
+</form>
+</section>
+<aside class="preferences-aside">
+<span class="aside-art" aria-hidden="true">✳</span>
+<h2>Make room for<br>what you love.</h2>
+<p>These are your daily targets, not a prescription for a single meal. Use the nutrition breakdown to see how each option fits into your day.</p>
+<div class="aside-divider">
+</div>
+<h3>A little flexibility helps.</h3>
+<p>You can update your preferences anytime. Your needs are personal, so choose targets that work for you.</p>
+<a class="text-link" href="{% url 'register' %}">Save your preferences with an account ↗</a>
+</aside>
+</div>
 {% endblock %}
