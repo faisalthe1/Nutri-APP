@@ -5,19 +5,37 @@ Django settings for config project.
 import os
 from pathlib import Path
 
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Security / env-driven config ---
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-do-not-use')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+ON_RENDER = bool(os.environ.get('RENDER') or os.environ.get('RENDER_EXTERNAL_HOSTNAME'))
+DEBUG = os.environ.get('DEBUG', 'False' if ON_RENDER else 'True').lower() == 'true'
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    if ON_RENDER or not DEBUG:
+        raise ImproperlyConfigured('Set SECRET_KEY before starting in production.')
+    SECRET_KEY = 'local-development-only-secret-key'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+NUTRITIONIX_APP_ID = os.environ.get('NUTRITIONIX_APP_ID', '')
+NUTRITIONIX_APP_KEY = os.environ.get('NUTRITIONIX_APP_KEY', '')
+NUTRITIONIX_TIMEOUT = (3.05, 8)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if ON_RENDER else None
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] + [
+    host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()
+]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     # Needed so CSRF checks pass on your Render URL
-    CSRF_TRUSTED_ORIGINS = [f"https://{RENDER_EXTERNAL_HOSTNAME}"]
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
 # --- Apps ---
 INSTALLED_APPS = [
@@ -73,9 +91,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
+
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(conn_max_age=60, conn_health_checks=True)
 
 # --- Password validation ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -93,7 +114,7 @@ USE_TZ = True
 
 # --- Static & Media files ---
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'nutrition/static')]
+# AppDirectoriesFinder discovers nutrition/static without duplicate entries.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # for collectstatic on Render
 
 # Use WhiteNoise hashed/compressed storage in production

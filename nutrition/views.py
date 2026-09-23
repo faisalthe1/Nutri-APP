@@ -2,9 +2,11 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from .forms import SignUpForm, PreferencesForm, GuestPreferencesForm
 from .models import UserPreferences, SavedMeal
 from .services import search_fast_foods, get_meal_details
@@ -53,7 +55,7 @@ def set_preferences(request):
             instance=preferences,
             initial=form_data if not preferences else None
         )
-        
+
         if form.is_valid():
             preferences = form.save(commit=False)
             preferences.user = request.user
@@ -81,7 +83,7 @@ def guest_preferences(request):
             request.session['guest_prefs'] = form.cleaned_data
             return redirect('recommendations')
     else:
-        form = GuestPreferencesForm()
+        form = GuestPreferencesForm(initial=request.session.get('guest_prefs'))
     return render(request, 'nutrition/guest_preferences.html', {'form': form})
 
 
@@ -95,7 +97,7 @@ def recommendations(request):
                 'protein_target': preferences.protein_target,
                 'carb_target': preferences.carb_target,
                 'fat_target': preferences.fat_target,
-                'allergies': preferences.allergies,
+                'allergies': preferences.allergies if preferences.allergies not in ('[]', '', None) else [],
             }
         except UserPreferences.DoesNotExist:
             messages.warning(request, 'Please set your preferences first.')
@@ -104,24 +106,27 @@ def recommendations(request):
         if 'guest_prefs' not in request.session:
             return redirect('guest_preferences')
         context = request.session['guest_prefs']
-    
+
+    query = request.GET.get("q", "").strip()[:100] or "fast food"
     meals = search_fast_foods(
-        query="fast food", 
+        query=query,
         goal=context['goal'],
         max_calories=context['calorie_limit'] if context['goal'] == 'cutting' else None,
         min_protein=context['protein_target'] if context['goal'] == 'bulking' else None
     )
-    print('measl', meals)
-    
+    service_unavailable = meals is None
+
     if meals is None:
         messages.error(request, 'We encountered an issue fetching recommendations. Please try again later.')
         meals = []
     elif not meals:
         messages.warning(request, 'No meals found matching your criteria. Try adjusting your preferences.')
-    
+
     return render(request, 'nutrition/results.html', {
         'meals': meals,
         'preferences': context,
+        'query': query,
+        'service_unavailable': service_unavailable,
     })
 
 
@@ -130,17 +135,21 @@ def meal_detail(request, meal_id):
     if not meal:
         messages.error(request, 'Could not retrieve meal details.')
         return redirect('recommendations')
-    
+
     is_saved = False
     if request.user.is_authenticated:
         is_saved = SavedMeal.objects.filter(user=request.user, meal_id=meal_id).exists()
-    
+
     return render(request, 'nutrition/meal_detail.html', {
         'meal': meal,
         'is_saved': is_saved,
+        'meal_id': meal_id,
+        'preferences': (getattr(request.user, 'userpreferences', None)
+                        if request.user.is_authenticated else request.session.get('guest_prefs')),
     })
 
 @login_required
+@require_POST
 def save_meal(request, meal_id):
     if request.method == 'POST':
         meal = get_meal_details(meal_id)
@@ -160,10 +169,14 @@ def save_meal(request, meal_id):
             messages.success(request, 'Meal saved to your favorites!')
         else:
             messages.error(request, 'Could not save meal.')
-    
+
     return redirect('meal_detail', meal_id=meal_id)
 
 @login_required
 def saved_meals(request):
     meals = SavedMeal.objects.filter(user=request.user).order_by('-saved_at')
     return render(request, 'nutrition/saved_meals.html', {'meals': meals})
+
+def health(request):
+    """Process health, independent of Nutritionix availability."""
+    return JsonResponse({"status": "ok"})
