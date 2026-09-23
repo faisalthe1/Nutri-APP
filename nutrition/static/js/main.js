@@ -1,83 +1,47 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Form validation enhancements
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const inputs = form.querySelectorAll('input[required], select[required]');
-            let isValid = true;
-            
-            inputs.forEach(input => {
-                if (!input.value.trim()) {
-                    input.classList.add('border-red-500');
-                    isValid = false;
-                } else {
-                    input.classList.remove('border-red-500');
-                }
-            });
-        });
+document.addEventListener('DOMContentLoaded', () => {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if ('IntersectionObserver' in window && !reducedMotion.matches) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealing');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('[data-reveal]').forEach((element, index) => {
+      element.style.setProperty('--reveal-delay', `${(index % 3) * 70}ms`);
+      observer.observe(element);
     });
-    
-    // Input field interactions
-    const inputFields = document.querySelectorAll('input, select');
-    inputFields.forEach(field => {
-        field.addEventListener('focus', function() {
-            this.parentElement.classList.add('ring-2', 'ring-indigo-200');
-        });
-        
-        field.addEventListener('blur', function() {
-            this.parentElement.classList.remove('ring-2', 'ring-indigo-200');
-        });
+  }
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', event => {
+      if (event.defaultPrevented || !form.checkValidity()) return;
+      if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+      const button = event.submitter || form.querySelector('button[type="submit"]');
+      if (!button) return;
+      form.dataset.submitting = 'true';
+      button.dataset.originalText = button.textContent;
+      button.textContent = button.dataset.busyText || 'Just a moment…';
+      button.setAttribute('aria-disabled', 'true');
+      form.setAttribute('aria-busy', 'true');
+      document.getElementById('form-status').textContent = button.textContent;
     });
-    
-    // Toggle password visibility
-    const togglePasswordButtons = document.querySelectorAll('.toggle-password');
-    togglePasswordButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const input = this.previousElementSibling;
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
-            this.querySelector('i').classList.toggle('fa-eye');
-            this.querySelector('i').classList.toggle('fa-eye-slash');
-        });
+  });
+  // Back/forward navigation may restore a form from the browser's page cache.
+  window.addEventListener('pageshow', () => {
+    document.querySelectorAll('form[data-submitting]').forEach(form => {
+      delete form.dataset.submitting;
+      form.removeAttribute('aria-busy');
+      form.querySelectorAll('[data-original-text]').forEach(button => {
+        button.textContent = button.dataset.originalText;
+        button.removeAttribute('aria-disabled');
+        delete button.dataset.originalText;
+      });
     });
-    
-    // Animate meal cards on page load
-    const mealCards = document.querySelectorAll('.meal-card');
-    mealCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.classList.add('animate-fadeIn');
-    });
-    
-    // Nutrition facts tabs
-    const nutritionTabs = document.querySelectorAll('.nutrition-tab');
-    const nutritionContents = document.querySelectorAll('.nutrition-content');
-    
-    if (nutritionTabs.length > 0) {
-        nutritionTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const target = this.getAttribute('data-target');
-                
-                // Update active tab
-                nutritionTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Show targeted content
-                nutritionContents.forEach(content => {
-                    content.classList.add('hidden');
-                    if (content.id === target) {
-                        content.classList.remove('hidden');
-                    }
-                });
-            });
-        });
-    }
-    
-    // Save meal button animation
-    const saveButtons = document.querySelectorAll('.save-meal-btn');
-    saveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
-        });
-    });
+    document.getElementById('form-status').textContent = '';
+  });
 });
