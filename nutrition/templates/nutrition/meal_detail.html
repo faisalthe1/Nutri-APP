@@ -6,7 +6,7 @@
 <section class="panel detail-main">
 <p class="eyebrow">{{ meal.brand_name|default:'YOUR MEAL, AT A GLANCE' }}</p>
 <h1>{{ meal.food_name }}</h1>
-<p>Per {{ meal.serving_qty }} {{ meal.serving_unit }}</p>
+<p>Per {{ meal.serving_description }}</p>
 <div class="calorie-value">{{ meal.nf_calories|floatformat:0 }}<span>kcal</span>
 </div>
 <div class="macro-grid">
@@ -76,7 +76,7 @@
 <p>Add your targets to see how this meal fits into your day.</p>
 <a class="text-link" href="{% if user.is_authenticated %}{% url 'set_preferences' %}{% else %}{% url 'guest_preferences' %}{% endif %}">Set your preferences ↗</a>
 {% endif %}
-<p class="field-hint">Nutrition values are supplied by Nutritionix. Check ingredients and allergens directly with the restaurant.</p>
+<p class="field-hint">{% if meal.legacy %}This is your saved Nutritionix snapshot; it is no longer updated.{% else %}Nutrition values are supplied by fatsecret.{% endif %} Check ingredients and allergens directly with the restaurant.</p>
 </aside>
 </div>
 {% endblock %}

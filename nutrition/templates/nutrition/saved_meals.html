@@ -20,6 +20,7 @@
 <h3>
 <a href="{% url 'meal_detail' meal.meal_id %}">{{ meal.meal_name }}</a>
 </h3>
+{% if meal.unavailable %}<p>Nutrition details are temporarily unavailable. Your favorite is still saved.</p>{% else %}
 <div class="calorie-value">{{ meal.calories }}<span>kcal</span>
 </div>
 <div class="macro-grid">
@@ -36,11 +37,19 @@
 <span>Fat</span>
 </div>
 </div>
+{% endif %}
 <a class="card-link" href="{% url 'meal_detail' meal.meal_id %}">View nutrition ↗</a>
 <p class="field-hint">Saved {{ meal.saved_at|date:'M j, Y' }}</p>
 </article>
 {% endfor %}
 </div>
+{% if page_obj.has_other_pages %}
+<nav class="section-heading" aria-label="Saved meals pages">
+{% if page_obj.has_previous %}<a class="text-link" href="?page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+{% if page_obj.has_next %}<a class="text-link" href="?page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
 {% else %}
 <div class="panel empty-state">
 <span class="empty-icon" aria-hidden="true">♡</span>

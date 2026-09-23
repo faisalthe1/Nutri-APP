@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from concurrent.futures import ThreadPoolExecutor
+from django.core.paginator import Paginator
+from django.views.decorators.cache import never_cache
 
-# Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -87,6 +88,7 @@ def guest_preferences(request):
     return render(request, 'nutrition/guest_preferences.html', {'form': form})
 
 
+@never_cache
 def recommendations(request):
     if request.user.is_authenticated:
         try:
@@ -130,8 +132,16 @@ def recommendations(request):
     })
 
 
+@never_cache
 def meal_detail(request, meal_id):
     meal = get_meal_details(meal_id)
+    if not meal and request.user.is_authenticated and not meal_id.startswith('fs-'):
+        saved = SavedMeal.objects.filter(user=request.user, meal_id=meal_id).first()
+        if saved:
+            meal = {'food_name': saved.meal_name, 'brand_name': saved.restaurant,
+                    'nf_calories': saved.calories, 'nf_protein': saved.protein,
+                    'nf_total_carbohydrate': saved.carbs, 'nf_total_fat': saved.fat,
+                    'serving_description': '1 saved serving', 'legacy': True}
     if not meal:
         messages.error(request, 'Could not retrieve meal details.')
         return redirect('recommendations')
@@ -157,14 +167,10 @@ def save_meal(request, meal_id):
             SavedMeal.objects.get_or_create(
                 user=request.user,
                 meal_id=meal_id,
-                defaults={
-                    'meal_name': meal.get('food_name', ''),
-                    'restaurant': meal.get('brand_name', 'Unknown'),
-                    'calories': meal.get('nf_calories', 0),
-                    'protein': meal.get('nf_protein', 0),
-                    'carbs': meal.get('nf_total_carbohydrate', 0),
-                    'fat': meal.get('nf_total_fat', 0),
-                }
+                # FatSecret Basic permits persisting IDs, not food content.
+                # Keep the existing schema for legacy Nutritionix snapshots.
+                defaults={'meal_name': '', 'restaurant': '', 'calories': 0,
+                          'protein': 0, 'carbs': 0, 'fat': 0},
             )
             messages.success(request, 'Meal saved to your favorites!')
         else:
@@ -173,10 +179,29 @@ def save_meal(request, meal_id):
     return redirect('meal_detail', meal_id=meal_id)
 
 @login_required
+@never_cache
 def saved_meals(request):
-    meals = SavedMeal.objects.filter(user=request.user).order_by('-saved_at')
-    return render(request, 'nutrition/saved_meals.html', {'meals': meals})
+    page = Paginator(SavedMeal.objects.filter(user=request.user).order_by('-saved_at'), 6).get_page(request.GET.get('page'))
+    meals = list(page.object_list)
+    current = [meal for meal in meals if meal.meal_id.startswith('fs-')]
+    if current:
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            details = list(pool.map(get_meal_details, [meal.meal_id for meal in current]))
+        for meal, detail in zip(current, details):
+            meal.unavailable = detail is None
+            if detail:
+                # Display-only attributes: never save fetched content to the DB.
+                meal.meal_name = detail['food_name']
+                meal.restaurant = detail['brand_name']
+                meal.calories = detail['nf_calories']
+                meal.protein = detail['nf_protein']
+                meal.carbs = detail['nf_total_carbohydrate']
+                meal.fat = detail['nf_total_fat']
+            else:
+                meal.meal_name = 'Saved meal'
+    return render(request, 'nutrition/saved_meals.html', {'meals': meals, 'page_obj': page})
+
 
 def health(request):
-    """Process health, independent of Nutritionix availability."""
+    """Process health, independent of nutrition provider availability."""
     return JsonResponse({"status": "ok"})

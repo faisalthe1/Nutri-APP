@@ -20,9 +20,9 @@ if not SECRET_KEY:
         raise ImproperlyConfigured('Set SECRET_KEY before starting in production.')
     SECRET_KEY = 'local-development-only-secret-key'
 
-NUTRITIONIX_APP_ID = os.environ.get('NUTRITIONIX_APP_ID', '')
-NUTRITIONIX_APP_KEY = os.environ.get('NUTRITIONIX_APP_KEY', '')
-NUTRITIONIX_TIMEOUT = (3.05, 8)
+FATSECRET_CLIENT_ID = os.environ.get('FATSECRET_CLIENT_ID', '')
+FATSECRET_CLIENT_SECRET = os.environ.get('FATSECRET_CLIENT_SECRET', '')
+FATSECRET_TIMEOUT = (3.05, 8)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if ON_RENDER else None
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG

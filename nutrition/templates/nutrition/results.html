@@ -53,9 +53,9 @@
 <span aria-hidden="true">↗</span>
 </div>
 <h3>
-<a href="{% url 'meal_detail' meal.nix_item_id %}">{{ meal.food_name }}</a>
+<a href="{% url 'meal_detail' meal.meal_id %}">{{ meal.food_name }}</a>
 </h3>
-<p class="meal-serving">{{ meal.serving_qty }} {{ meal.serving_unit }}</p>
+<p class="meal-serving">{{ meal.serving_description }}</p>
 <div class="calorie-value">{{ meal.nf_calories|floatformat:0 }}<span>kcal</span>
 </div>
 <div class="macro-grid">
@@ -78,7 +78,7 @@
 <span>Fat</span>
 </div>
 </div>
-<a class="card-link" href="{% url 'meal_detail' meal.nix_item_id %}">View nutrition <span aria-hidden="true">↗</span>
+<a class="card-link" href="{% url 'meal_detail' meal.meal_id %}">View nutrition <span aria-hidden="true">↗</span>
 </a>
 </article>
 {% endfor %}

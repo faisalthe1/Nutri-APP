@@ -14,7 +14,7 @@ services:
         value: "False"
       - key: SECRET_KEY
         generateValue: true
-      - key: NUTRITIONIX_APP_ID
+      - key: FATSECRET_CLIENT_ID
         sync: false
-      - key: NUTRITIONIX_APP_KEY
+      - key: FATSECRET_CLIENT_SECRET
         sync: false
