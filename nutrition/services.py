@@ -1,4 +1,4 @@
-"""FatSecret Basic API adapter. Cache OAuth tokens, never food content."""
+"""FatSecret Premier API adapter. Cache OAuth tokens, never food content."""
 import hashlib
 import logging
 import math
@@ -24,7 +24,7 @@ def _number(value):
 
 
 def _token_key():
-    credentials = f'{settings.FATSECRET_CLIENT_ID}:{settings.FATSECRET_CLIENT_SECRET}'
+    credentials = f'{settings.FATSECRET_CLIENT_ID}:{settings.FATSECRET_CLIENT_SECRET}:basic premier'
     return 'fatsecret:token:' + hashlib.sha256(credentials.encode()).hexdigest()
 
 
@@ -49,7 +49,7 @@ def _access_token():
             response = requests.post(
                 TOKEN_URL,
                 auth=(settings.FATSECRET_CLIENT_ID, settings.FATSECRET_CLIENT_SECRET),
-                data={'grant_type': 'client_credentials', 'scope': 'basic'},
+                data={'grant_type': 'client_credentials', 'scope': 'basic premier'},
                 timeout=settings.FATSECRET_TIMEOUT,
             )
             response.raise_for_status()
@@ -114,34 +114,27 @@ def _base_meal(item):
 
 
 def search_fast_foods(query, goal=None, max_calories=None, min_protein=None):
-    data = _request('foods/search/v1', {'search_expression': query, 'max_results': 50})
-    if data is None or not isinstance(data.get('foods'), dict):
+    data = _request('foods/search/v5', {'search_expression': query, 'max_results': 50,
+                                       'flag_default_serving': 'true'})
+    container = data.get('foods_search') if data else None
+    if not isinstance(container, dict):
+        return None
+    results = container.get('results')
+    if results is None and str(container.get('total_results')) == '0':
+        return []
+    if not isinstance(results, dict):
         return None
     foods = []
-    for item in _items(data['foods'].get('food')):
-        meal = _base_meal(item)
-        description = item.get('food_description')
-        if not meal or not isinstance(description, str):
+    for item in _items(results.get('food')):
+        meal = _normalize_meal(item)
+        if not meal:
             continue
-        serving, separator, nutrients = description.removeprefix('Per ').partition(' - ')
-        if not separator or not serving:
-            continue
-        # Basic search supplies nutrition as a description, not structured fields.
-        values = {}
-        for label, unit, field in [('Calories', 'kcal', 'nf_calories'),
-                                   ('Protein', 'g', 'nf_protein'),
-                                   ('Carbs', 'g', 'nf_total_carbohydrate'),
-                                   ('Fat', 'g', 'nf_total_fat')]:
-            match = re.search(rf'\b{label}:\s*([0-9]+(?:\.[0-9]+)?)\s*{unit}\b', nutrients)
-            values[field] = _number(match.group(1)) if match else None
-        if any(value is None for value in values.values()):
-            continue
-        calories, protein = values['nf_calories'], values['nf_protein']
+        calories, protein = meal['nf_calories'], meal['nf_protein']
         if goal == 'cutting' and max_calories and calories > max_calories:
             continue
         if goal == 'bulking' and min_protein and (not calories or protein * 4 / calories < .15):
             continue
-        foods.append({**meal, **values, 'serving_description': serving})
+        foods.append(meal)
     if goal == 'bulking':
         foods.sort(key=lambda meal: (-meal['nf_protein'], -meal['nf_calories']))
     elif goal == 'cutting':
@@ -153,22 +146,30 @@ def get_meal_details(meal_id):
     # Keep legacy Nutritionix identifiers separate from FatSecret numeric IDs.
     if not re.fullmatch(r'fs-[0-9]{1,20}', meal_id):
         return None
-    data = _request('food/v5', {'food_id': meal_id[3:]})
+    data = _request('food/v5', {'food_id': meal_id[3:], 'flag_default_serving': 'true'})
     item = data.get('food') if data else None
     if not isinstance(item, dict):
         return None
+    meal = _normalize_meal(item)
+    return meal if meal and meal['meal_id'] == meal_id else None
+
+
+def _normalize_meal(item):
+    """Use the same provider portion on result cards, details, and favorites."""
     meal = _base_meal(item)
     container = item.get('servings')
     servings = _items(container.get('serving')) if isinstance(container, dict) else []
-    if not meal or meal['meal_id'] != meal_id or not servings:
+    if not meal or not servings:
         return None
-    # Match Basic search: generic foods use 100g; brands use their real portion,
-    # not v5's additional derived servings (which have serving_id=0).
-    if item.get('food_type') == 'Generic':
-        serving = next((s for s in servings if _number(s.get('metric_serving_amount')) == 100
-                        and s.get('metric_serving_unit') == 'g'), servings[0])
-    else:
-        serving = next((s for s in servings if str(s.get('serving_id', '0')) != '0'), servings[0])
+    # Prefer FatSecret's suggested portion; exclude v5's derived brand servings.
+    standard = [s for s in servings if str(s.get('serving_id', '0')) != '0'] or servings
+    serving = next((s for s in standard if str(s.get('is_default')) == '1'), None)
+    if serving is None:
+        if item.get('food_type') == 'Generic':
+            serving = next((s for s in standard if _number(s.get('metric_serving_amount')) == 100
+                            and s.get('metric_serving_unit') == 'g'), standard[0])
+        else:
+            serving = standard[0]
     meal['serving_description'] = serving.get('serving_description') or '1 serving'
     for source, field in [('calories', 'nf_calories'), ('protein', 'nf_protein'),
                           ('carbohydrate', 'nf_total_carbohydrate'), ('fat', 'nf_total_fat'),

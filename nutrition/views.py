@@ -109,7 +109,7 @@ def recommendations(request):
             return redirect('guest_preferences')
         context = request.session['guest_prefs']
 
-    query = request.GET.get("q", "").strip()[:100] or "fast food"
+    query = request.GET.get("q", "").strip()[:100] or "McDonald's"
     meals = search_fast_foods(
         query=query,
         goal=context['goal'],

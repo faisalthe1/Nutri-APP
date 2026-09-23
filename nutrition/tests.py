@@ -46,6 +46,11 @@ SEARCH_FOOD = {'food_id': '123', 'food_name': 'Chicken bowl', 'food_type': 'Bran
 SERVING = {'serving_id': '456', 'serving_description': '1 bowl', 'calories': '480',
            'protein': '32', 'carbohydrate': '48', 'fat': '18', 'sodium': '500'}
 
+SEARCH_FOOD['servings'] = {'serving': SERVING}
+
+def search_payload(foods):
+    return {'foods_search': {'results': {'food': foods}}}
+
 
 @override_settings(FATSECRET_CLIENT_ID='test-id', FATSECRET_CLIENT_SECRET='test-secret')
 class NutritionServiceTests(SimpleTestCase):
@@ -61,7 +66,7 @@ class NutritionServiceTests(SimpleTestCase):
         self.get.return_value.status_code = 200
 
     def test_tokens_are_reused_but_food_content_is_not_cached(self):
-        self.get.return_value.json.return_value = {'foods': {'food': SEARCH_FOOD}}
+        self.get.return_value.json.return_value = search_payload(SEARCH_FOOD)
         first = search_fast_foods('chicken')
         self.assertEqual(first[0]['nf_protein'], 32)
         self.assertEqual(first[0]['meal_id'], 'fs-123')
@@ -70,11 +75,11 @@ class NutritionServiceTests(SimpleTestCase):
         self.post.assert_called_once()
         self.assertEqual(self.get.call_count, 2)
         self.assertEqual(self.post.call_args.kwargs['auth'], ('test-id', 'test-secret'))
-        self.assertEqual(self.post.call_args.kwargs['data']['scope'], 'basic')
+        self.assertEqual(self.post.call_args.kwargs['data']['scope'], 'basic premier')
 
     def test_ranking_and_cutting_filters(self):
-        low = {**SEARCH_FOOD, 'food_id': '124', 'food_description': 'Per 1 serving - Calories: 250kcal | Fat: 5g | Carbs: 20g | Protein: 20g'}
-        self.get.return_value.json.return_value = {'foods': {'food': [low, SEARCH_FOOD, None, {}]}}
+        low = {**SEARCH_FOOD, 'food_id': '124', 'servings': {'serving': {**SERVING, 'calories': '250', 'protein': '20'}}}
+        self.get.return_value.json.return_value = search_payload([low, SEARCH_FOOD, None, {}])
         self.assertEqual(search_fast_foods('chicken', 'bulking', min_protein=150)[0]['nf_protein'], 32)
         self.assertEqual(len(search_fast_foods('chicken', 'cutting', max_calories=300)), 1)
 
@@ -92,7 +97,7 @@ class NutritionServiceTests(SimpleTestCase):
             self.assertIsNone(get_meal_details('fs-123'))
 
     def test_empty_search_is_distinct_from_provider_error(self):
-        self.get.return_value.json.return_value = {'foods': {'total_results': '0'}}
+        self.get.return_value.json.return_value = {'foods_search': {'total_results': '0'}}
         self.assertEqual(search_fast_foods('nothing'), [])
         self.get.return_value.json.return_value = {'error': {'code': 21, 'message': 'private'}}
         with self.assertLogs('nutrition.services', level='WARNING') as logs:
@@ -101,7 +106,7 @@ class NutritionServiceTests(SimpleTestCase):
         self.assertNotIn('private', logs.output[0])
 
     def test_expired_token_refreshes_once(self):
-        self.get.return_value.json.side_effect = [{'error': {'code': 13}}, {'foods': {'food': SEARCH_FOOD}}]
+        self.get.return_value.json.side_effect = [{'error': {'code': 13}}, search_payload(SEARCH_FOOD)]
         self.assertEqual(len(search_fast_foods('chicken')), 1)
         self.assertEqual(self.post.call_count, 2)
         self.get.return_value.json.side_effect = None
@@ -122,7 +127,7 @@ class NutritionServiceTests(SimpleTestCase):
             self.assertNotIn(value, logs.output[0])
 
     def test_missing_and_nonfinite_nutrients_are_not_zero(self):
-        self.get.return_value.json.return_value = {'foods': {'food': {**SEARCH_FOOD, 'food_description': 'Per 1 bowl - Calories: NaNkcal'}}}
+        self.get.return_value.json.return_value = search_payload({**SEARCH_FOOD, 'servings': {'serving': {**SERVING, 'calories': 'NaN'}}})
         self.assertEqual(search_fast_foods('chicken'), [])
         self.get.return_value.json.return_value = {'food': {**SEARCH_FOOD, 'servings': {'serving': {**SERVING, 'calories': 'NaN'}}}}
         self.assertIsNone(get_meal_details('fs-123'))
@@ -139,6 +144,16 @@ class NutritionServiceTests(SimpleTestCase):
         self.get.return_value.json.return_value = {'food': {**SEARCH_FOOD, 'food_type': 'Generic', 'servings': {'serving': [
             SERVING, {**SERVING, 'metric_serving_amount': '100', 'metric_serving_unit': 'g', 'calories': '100', 'serving_description': '100 g'}]}}}
         self.assertEqual(get_meal_details('fs-123')['nf_calories'], 100)
+
+    def test_search_and_details_use_same_default_portion(self):
+        item = {**SEARCH_FOOD, 'servings': {'serving': [
+            {**SERVING, 'calories': '900'},
+            {**SERVING, 'is_default': '1', 'calories': '300', 'serving_description': '1 sandwich'}]}}
+        self.get.return_value.json.return_value = search_payload(item)
+        result = search_fast_foods('sandwich')[0]
+        self.assertEqual(result['nf_calories'], 300)
+        self.get.return_value.json.return_value = {'food': item}
+        self.assertEqual(get_meal_details('fs-123'), result)
 
     def test_legacy_and_invalid_ids_never_reach_provider(self):
         for meal_id in ('old-nutritionix-id', 'fs-../bad', '123'):
